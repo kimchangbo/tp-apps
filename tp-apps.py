@@ -38,7 +38,7 @@ def safe_image(file_name, img_width=350):
 
 # --- 이미지 Base64 인코딩 함수 (보고서 매립용) ---
 def get_image_html(file_name, width=350):
-    """이미지 파일을 읽어 보고서(Word/HWP) 안에 완전히 매립하는 함수"""
+    """이미지 파일을 읽어 보고서 안에 완전히 매립하는 함수"""
     actual_path = find_image_path(file_name)
     if actual_path:
         with open(actual_path, "rb") as f:
@@ -46,7 +46,7 @@ def get_image_html(file_name, width=350):
             b64 = base64.b64encode(data).decode()
             ext = actual_path.split('.')[-1].lower()
             mime = f"image/{ext}" if ext != "jpg" else "image/jpeg"
-            return f'<div style="text-align:center; margin: 15px 0;"><img src="data:{mime};base64,{b64}" width="{width}" style="border: 1px solid #ccc;"/></div>'
+            return f'<div class="img-container"><img src="data:{mime};base64,{b64}" width="{width}"/></div>'
     
     return f'<p style="color:red; font-size:13px; font-weight:bold;">[⚠️ 이미지 파일 누락: {os.path.splitext(file_name)[0]} 그림을 찾지 못해 보고서에 포함하지 못했습니다]</p>'
 
@@ -151,7 +151,7 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("① 수평 충돌 (Horizontal Collision)")
-    safe_image("소파불록의 수평충돌.png", 380)
+    safe_image("소파블록의 수평충돌.png", 380)
     st.markdown("**블록 전체가 파랑의 유속에 의해 직선으로 가속되어 벽체를 때리는 방식입니다. 운동 에너지가 가장 크며, 본 설계 시스템의 기준 하중(Fmax)을 결정하는 가장 지배적인 모드입니다.**")
 
     st.subheader("② 락킹 충돌 (Rocking Collision)")
@@ -261,9 +261,9 @@ with col_table:
 
 st.divider()
 
-# --- 4. 한글(HWP)/Word 호환 보고서 다운로드 ---
-st.header("📄 설계 검토 보고서 다운로드 (삽도 및 표 포함)")
-st.write("아래 버튼을 클릭하면 현재 화면의 **모든 삽도, 분석표, 상세 수식**이 완전히 포함된 보고서를 다운로드합니다.")
+# --- 4. 완벽한 양식의 보고서 다운로드 (HTML/PDF용) ---
+st.header("📄 설계 검토 보고서 다운로드")
+st.write("아래 버튼을 클릭하여 웹 보고서(HTML)를 다운로드하세요. 열린 창에서 **[Ctrl + P]**를 눌러 **'PDF로 저장'**하시면 깨짐 없이 완벽한 보고서가 완성됩니다.")
 
 if res:
     html_report = f"""
@@ -271,15 +271,25 @@ if res:
     <head>
         <meta charset="utf-8">
         <style>
-            body {{ font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; line-height: 1.6; padding: 20px; }}
+            body {{ font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; line-height: 1.6; padding: 40px; max-width: 900px; margin: 0 auto; }}
             h1 {{ text-align: center; color: #2c3e50; border-bottom: 3px solid #2c3e50; padding-bottom: 10px; margin-bottom: 30px; }}
-            h2 {{ color: #2980b9; border-bottom: 2px solid #2980b9; padding-bottom: 5px; margin-top: 30px; }}
-            h3 {{ color: #e67e22; }}
-            table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
-            th, td {{ border: 1px solid #bdc3c7; padding: 10px; }}
+            h2 {{ color: #2980b9; border-bottom: 2px solid #2980b9; padding-bottom: 5px; margin-top: 40px; page-break-before: auto; }}
+            h3 {{ color: #e67e22; margin-top: 25px; }}
+            table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
+            th, td {{ border: 1px solid #bdc3c7; padding: 12px; }}
             th {{ background-color: #ecf0f1; font-weight: bold; text-align: center; }}
             .highlight {{ color: #c0392b; font-weight: bold; }}
             .formula {{ background-color: #f9f9f9; padding: 15px; border-left: 5px solid #3498db; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 1.1em; }}
+            .img-container {{ text-align: center; margin: 20px 0; }}
+            .img-container img {{ max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }}
+            /* 인쇄 시 여백 및 페이지 넘김 설정 */
+            @media print {{
+                body {{ padding: 0; max-width: 100%; }}
+                h2 {{ page-break-after: avoid; }}
+                img {{ max-width: 80% !important; page-break-inside: avoid; }}
+                table {{ page-break-inside: avoid; }}
+                @page {{ margin: 2cm; }}
+            }}
         </style>
     </head>
     <body>
@@ -301,7 +311,7 @@ if res:
         <p>제공된 삽도 자료를 바탕으로 소파블록이 케이슨 벽체에 가하는 하중의 종류와 거동 특성을 분석합니다.</p>
         
         <h3>① 수평 충돌 (Horizontal Collision / Translation)</h3>
-        {get_image_html("소파불록의 수평충돌.png")}
+        {get_image_html("소파블록의 수평충돌.png")}
         <p>블록 전체가 파랑의 유속에 의해 직선으로 가속되어 벽체를 때리는 방식입니다. 운동 에너지가 가장 크며, 본 설계 시스템의 기준 하중(Fmax)을 결정하는 가장 지배적인 모드입니다.</p>
 
         <h3>② 락킹 충돌 (Rocking Collision)</h3>
@@ -358,8 +368,8 @@ if res:
     </html>
     """
     
-    # Base64 인코딩
+    # HTML MIME 타입으로 변경 (.html 확장자)
     b64 = base64.b64encode(html_report.encode('utf-8')).decode()
-    href = f'<a href="data:application/msword;base64,{b64}" download="소파블록_설계검토보고서.doc" style="display: inline-block; padding: 15px 30px; background-color: #2e86de; color: white; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📥 한글/워드 호환 보고서 다운로드 (그림/표 포함)</a>'
+    href = f'<a href="data:text/html;base64,{b64}" download="소파블록_설계검토보고서.html" style="display: inline-block; padding: 15px 30px; background-color: #2e86de; color: white; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📥 웹 보고서(HTML) 다운로드 (클릭)</a>'
     st.markdown(href, unsafe_allow_html=True)
-    st.caption("💡 **Tip:** 다운로드한 파일을 한글(HWP)이나 MS Word에서 열어보세요. 코드가 파일(.jpg, .png)을 알아서 찾아 그림과 표까지 완벽히 보고서 안에 넣어줍니다!")
+    st.info("💡 **이용 팁:** 다운로드된 `.html` 파일을 더블클릭하여 크롬/엣지 브라우저로 엽니다. 그림과 표가 모두 정상적으로 나오는지 확인한 후, **마우스 우클릭 -> [인쇄] -> 대상에서 [PDF로 저장]**을 선택하시면 보고서용 PDF가 완벽하게 만들어집니다.")
